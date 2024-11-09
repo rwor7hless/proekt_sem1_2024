@@ -59,3 +59,60 @@ binary_vector = text_to_binary_vector(preprocessed_text, word_list)
 # Выводим список слов и бинарный вектор
 print("Список слов:", word_list)
 print("Бинарный вектор:", binary_vector)
+
+#СКРИПТ ДЛЯ ЗАПИСИ В БД POSTGRESS ПРОТОТИП
+import psycopg2
+from psycopg2 import sql
+
+def connect_to_db():
+    # Подключение к базе данных PostgreSQL
+    conn = psycopg2.connect(
+        dbname="your_db_name",  # имя базы данных
+        user="your_user",       # имя пользователя
+        password="your_password",  # пароль
+        host="localhost",       # хост (localhost или IP адрес сервера)
+        port="5432"             # порт по умолчанию
+    )
+    return conn
+
+def insert_text_to_db(text):
+    try:
+        # Подключаемся к базе данных
+        conn = connect_to_db()
+        cursor = conn.cursor()
+
+        # SQL запрос для вставки текста в таблицу
+        insert_query = sql.SQL("INSERT INTO messages (text) VALUES (%s)")
+        cursor.execute(insert_query, (text,))
+
+        # Подтверждаем изменения
+        conn.commit()
+
+        print("Text successfully inserted into the database.")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+    finally:
+        # Закрываем соединение с базой данных
+        cursor.close()
+        conn.close()
+
+def read_lines_from_file(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()  # Читаем все строки в список
+            return lines
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return None
+
+# Пример использования для вставки нескольких строк
+if __name__ == "__main__":
+    file_path = 'path_to_your_file.txt'
+    lines = read_lines_from_file(file_path)
+
+    if lines:
+        for line in lines:
+            insert_text_to_db(line.strip())  # .strip() убирает лишние пробелы и символы новой строки
+
